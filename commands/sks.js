@@ -46,8 +46,8 @@ module.exports = {
 
 		if (!isNaN(amount) && amount > 0) {
 			// spam 10 سلام
-			message = args.slice(1).join(" ");
-			if (amount > 1000) amount = 1000; // تقدر تحيد هاد السطر إلا بغيتي لا محدود بالصح
+			
+			if ; // تقدر تحيد هاد السطر إلا بغيتي لا سلام بالصح
 		} else {
 			// spam سلام -> لا محدود
 			amount = Infinity;
