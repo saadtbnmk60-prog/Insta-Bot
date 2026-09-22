@@ -52,12 +52,12 @@ module.exports = {
         running.delete(threadID);
         return api.sendMessage("❌ وقع خطأ. تم إيقاف السبام.", threadID);
       }
-    }, 3000); // بدلت 2ث لـ 3ث باش نقصو البان
+    }, 1000); // بدلت 2ث لـ 1ث باش نقصو البان
 
     running.set(threadID, { timer });
 
     api.sendMessage(
-      `▶️ بدا السبام.\n⏱️ رسالة كل 3 ثواني.\n📌 لا محدود\n\n🛑 للتوقيف: spam stop`,
+      `▶️ بدا السبام.\n⏱️ رسالة كل 1 ثواني.\n📌 لا محدود\n\n🛑 للتوقيف: spam stop`,
       threadID
     );
   }
