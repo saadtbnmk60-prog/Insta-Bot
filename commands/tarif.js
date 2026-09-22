@@ -24,7 +24,7 @@ module.exports = {
 📸 Instagram: @smlihi
 📘 Facebook: shtot
 
-✨ تابعوني على حساباتي ❤️
+✨ ـــــــــــــــــــــــــــــــــــــــــــــــ   ❤️
 `;
 
 		return message.reply(text);
