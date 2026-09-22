@@ -1,57 +1,64 @@
-"use strict";
+const running = new Map();
 
 module.exports = {
-	config: {
-		name: "spam",
-		aliases: ["sp"],
-		author: "Neoaz 🐊",
-		category: "fun",
-		cooldown: 5,
-		role: 0,
-		noPrefix: true,
-		description: {
-			en: "Send a message a limited number of times"
-		}
-	},
+  config: {
+    name: "spam",
+    aliases: ["سبام", "sp"],
+    version: "2.0.0",
+    author: "shtot",
+    countDown: 2,
+    role: 1,
+    shortDescription: "إرسال رسالة لا محدود",
+    longDescription: "كيبقا يعاود يرسل نفس الرسالة حتى توقفو",
+    category: "utility",
+    guide: "{pn} [الرسالة]\n{pn} stop\nمثال: {pn} drari fin wslto"
+  },
 
-	onStart: async function ({ api, event, args }) {
-		const { threadID } = event;
+  onStart: async function ({ api, event, args }) {
+    const threadID = event.threadID;
 
-		const amount = parseInt(args[0]);
+    // إيقاف
+    if (args[0] === "stop" || args[0] === "off") {
+      if (!running.has(threadID)) {
+        return api.sendMessage("❌ ما كاين حتى إرسال خدام.", threadID);
+      }
 
-		if (!amount || amount <= 0) {
-			return api.sendMessage(
-				"❌ الاستعمال:\nspam [العدد] [الرسالة]\n\nمثال:\nspam 10 سلام عليكم",
-				threadID
-			);
-		}
+      clearInterval(running.get(threadID).timer);
+      running.delete(threadID);
 
-		const message = args.slice(1).join(" ");
+      return api.sendMessage("⛔ تم إيقاف السبام.", threadID);
+    }
 
-		if (!message) {
-			return api.sendMessage(
-				"❌ خاصك تكتب الرسالة.\n\nمثال:\nspam 10 سلام عليكم",
-				threadID
-			);
-		}
+    // منع تشغيل أكثر من واحد
+    if (running.has(threadID)) {
+      return api.sendMessage("⚠️ راه السبام خدام دابا.\nاستعمل: spam stop", threadID);
+    }
 
-		let sent = 0;
+    // نجيبو الرسالة كاملة
+    const message = args.join(" ") || "رسالة سبام";
 
-		const sendBatch = async () => {
-			for (let i = 0; i < 3 && sent < amount; i++) {
-				sent++;
-				await api.sendMessage(message, threadID);
-			}
+    let count = 0;
 
-			if (sent >= amount) {
-				clearInterval(timer);
-			}
-		};
+    const timer = setInterval(async () => {
+      if (!running.has(threadID)) return;
 
-		await sendBatch();
+      count++;
 
-		if (sent < amount) {
-			var timer = setInterval(sendBatch, 1000);
-		}
-	}
+      try {
+        await api.sendMessage(`${message} [#${count}]`, threadID);
+      } catch (err) {
+        console.error(err);
+        clearInterval(timer);
+        running.delete(threadID);
+        return api.sendMessage("❌ وقع خطأ. تم إيقاف السبام.", threadID);
+      }
+    }, 3000); // بدلت 2ث لـ 3ث باش نقصو البان
+
+    running.set(threadID, { timer });
+
+    api.sendMessage(
+      `▶️ بدا السبام.\n⏱️ رسالة كل 3 ثواني.\n📌 لا محدود\n\n🛑 للتوقيف: spam stop`,
+      threadID
+    );
+  }
 };
