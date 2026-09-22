@@ -12,10 +12,10 @@ module.exports = {
 		role: 0,
 		noPrefix: true,
 		description: {
-			en: "Send a replied image every second for testing"
+			en: "Send a replied image every second until stopped"
 		},
 		usage: {
-			en: "Reply to an image and type spamimage"
+			en: "Reply to an image and type spamimage / stopspam"
 		}
 	},
 
@@ -27,7 +27,7 @@ module.exports = {
 		}
 
 		if (running) {
-			return message.reply("⚠️ كاين سبام خدام دابا.");
+			return message.reply("⚠️ كاين سبام خدام دابا، كتب stopspam باش تحبسو.");
 		}
 
 		const reply = event.messageReply;
@@ -43,24 +43,23 @@ module.exports = {
 				? attachment
 				: attachment.url ||
 				  attachment.uri ||
-				  attachment.imageUrl;
+				  attachment.imageUrl ||
+				  attachment.payload?.url;
 
-		if (!imageURL || typeof imageURL !== "string") {
+		if (!imageURL || typeof imageURL!== "string") {
 			return message.reply("❌ ماقدرتش نجيب رابط الصورة.");
 		}
 
 		running = true;
 
 		try {
-			for (let i = 0; i < 10 && running; i++) {
-
+			// لا محدود حتى تكتب stopspam
+			while (running) {
 				await message.send({
-					attachment: imageURL
+					attachment: await global.utils.getStreamFromURL(imageURL)
 				});
 
-				await new Promise(resolve =>
-					setTimeout(resolve, 1000)
-				);
+				await new Promise(resolve => setTimeout(resolve, 1000));
 			}
 		} catch (error) {
 			console.error("spamimage:", error);
