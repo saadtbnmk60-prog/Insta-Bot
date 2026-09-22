@@ -8,47 +8,44 @@ module.exports = {
 		aliases: ["stop"],
 		author: "Neoaz 🐊",
 		category: "fun",
-		cooldown: 2,
+		cooldown: 5,
 		role: 0,
 		noPrefix: true,
 		description: {
-			en: "Repeat a replied sticker unlimited until stop"
+			en: "Repeat a replied sticker",
 		},
 		usage: {
-			en: "Reply to a sticker and type siir / stop to stop"
-		}
+			en: "Reply to a sticker and type siir",
+		},
 	},
 
 	onStart: async function ({ message, event, invokedAs }) {
 
-		// أمر الإيقاف
 		if (invokedAs === "stop") {
 			running = false;
-			return message.reply("🛑 تم إيقاف الأمر.");
+			return message.reply("🛑 تم الإيقاف.");
 		}
 
 		const reply = event.messageReply;
 
 		if (!reply?.attachments?.length) {
-			return message.reply("❌ ردّ على ستيكر واكتب siir");
+			return message.reply("❌ رد على الملصق وكتب siir");
 		}
 
 		const attachment = reply.attachments[0];
-		
-		// إلا كان خدام من قبل ما يعودش يخدم
-		if (running) {
-			return message.reply("⚠️ راه خدام أصلا، كتب stop باش تحبسو");
+		const url = attachment.url || attachment.uri || attachment.imageUrl;
+
+		if (!url) {
+			return message.reply("❌ ماقدرتش نجيب رابط الملصق.");
 		}
 
 		running = true;
 
-		// لا محدود حتى تكتب stop
-		while (running) {
+		for (let i = 0; i < 10 && running; i++) {
 			await message.send({
-				attachment: attachment
+				attachment: url
 			});
 
-			// تسنا ثانية باش ما يتباناش الكونط
 			await new Promise(resolve => setTimeout(resolve, 1000));
 		}
 
