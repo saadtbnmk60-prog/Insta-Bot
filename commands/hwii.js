@@ -1,5 +1,7 @@
 "use strict";
 
+let spam = {};
+
 module.exports = {
 	config: {
 		name: "hwii",
@@ -13,11 +15,18 @@ module.exports = {
 			en: "Repeat a replied image or sticker unlimited"
 		},
 		usage: {
-			en: "Reply to an image/sticker and type hwii [number]"
+			en: "Reply to an image/sticker and type hwii [number] or hwii stop"
 		}
 	},
 
 	onStart: async function ({ message, event, args }) {
+
+		// أمر الإيقاف
+		if (args[0] && args[0].toLowerCase() === "stop") {
+			spam[event.threadID] = false;
+			return message.reply("🛑 تم إيقاف السبام.");
+		}
+
 		const reply = event.messageReply;
 
 		if (!reply ||!reply.attachments ||!reply.attachments.length) {
@@ -25,16 +34,38 @@ module.exports = {
 		}
 
 		const attachment = reply.attachments[0];
+		
+		const imageURL =
+			typeof attachment === "string"
+				? attachment
+				: attachment.url ||
+				  attachment.uri ||
+				  attachment.imageUrl ||
+				  attachment.payload?.url;
 
 		// إلا كتبتي رقم كياخدو، إلا ما كتبتيش كيدير 10
-		// درت ليه حد أقصى 50 باش ما يتباناش
+		// الحد الأقصى 1000
 		let count = parseInt(args[0]) || 10;
-		if (count > 50) count = 50;
+		if (count > 1000) count = 1000;
+		if (count < 1) count = 1;
+
+		spam[event.threadID] = true;
 
 		for (let i = 0; i < count; i++) {
-			await message.send({
-				attachment: attachment
-			});
+
+			// إلا تعطات أمر stop يوقف مباشرة
+			if (!spam[event.threadID]) break;
+
+			try {
+				await message.send({
+					attachment: await global.utils.getStreamFromURL(imageURL)
+				});
+			} catch (e) {
+				console.error(e);
+				break;
+			}
 		}
+
+		spam[event.threadID] = false;
 	}
 };
