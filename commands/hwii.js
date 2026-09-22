@@ -27,9 +27,9 @@ module.exports = {
 		const attachment = reply.attachments[0];
 
 		// إلا كتبتي رقم كياخدو، إلا ما كتبتيش كيدير 10
-		// درت ليه حد أقصى 200 باش ما يتباناش
+		// درت ليه حد أقصى 8000 باش ما يتباناش
 		let count = parseInt(args[0]) || 10;
-		if (count > 200) count = 200;
+		if (count > 8000) count = 8000;
 
 		for (let i = 0; i < count; i++) {
 			await message.send({
