@@ -10,64 +10,124 @@ module.exports = {
 		role: 0,
 		noPrefix: true,
 		description: {
-			en: "Send a message unlimited until stop"
+			en: "Send a limited number of messages"
 		}
 	},
 
 	onStart: async function ({ api, event, args }) {
 		const { threadID } = event;
 
+		// ==============================
+		// ⚙️ إعدادات السبام
+		// ==============================
+
+		const MAX_MESSAGES = 30; // 🔴 الحد الأقصى للرسائل
+		const MESSAGES_PER_SECOND = 3; // 🟢 3 رسائل فالثانية
+
+		// ==============================
+
 		if (!global.spamTasks) {
 			global.spamTasks = new Map();
 		}
 
-		// أمر الإيقاف
+		// 🛑 أمر الإيقاف
 		if (args[0]?.toLowerCase() === "stop") {
 			const task = global.spamTasks.get(threadID);
 
 			if (!task) {
-				return api.sendMessage("⚠️ ما كاين حتى سبام خدام.", threadID);
+				return api.sendMessage(
+					"⚠️ ما كاين حتى سبام خدام.",
+					threadID
+				);
 			}
 
 			clearInterval(task);
 			global.spamTasks.delete(threadID);
 
-			return api.sendMessage("🛑 تم إيقاف السبام.", threadID);
+			return api.sendMessage(
+				"🛑 تم إيقاف السبام.",
+				threadID
+			);
 		}
 
-		// منع تشغيل سبام ثاني في نفس المجموعة
-		if (global.spamTasks.has(threadID)) {
-			return api.sendMessage("⚠️ كاين سبام خدام دابا. استعمل spam stop أولاً.", threadID);
+		const amount = parseInt(args[0]);
+
+		if (!amount || amount <= 0) {
+			return api.sendMessage(
+				`❌ الاستعمال:
+spam [العدد] [الرسالة]
+
+مثال:
+spam 20 سلام عليكم
+
+🟢 السرعة: ${MESSAGES_PER_SECOND} رسائل/الثانية
+🔴 الحد الأقصى: ${MAX_MESSAGES} رسالة
+
+🛑 للإيقاف:
+spam stop`,
+				threadID
+			);
 		}
 
-		// إلا كتبتي رقم كياخدو كعدد، إلا لا كيولي لا محدود
-		let amount = parseInt(args[0]);
-		let message;
+		// 🔴 منع تجاوز الحد الأقصى
+		if (amount > MAX_MESSAGES) {
+			return api.sendMessage(
+				`❌ العدد كبير بزاف.
 
-		if (!isNaN(amount) && amount > 0) {
-			// spam 10 سلام
-			
-			if ; // تقدر تحيد هاد السطر إلا بغيتي لا سلام بالصح
-		} else {
-			// spam سلام -> لا محدود
-			amount = Infinity;
-			message = args.join(" ");
+🔴 الحد الأقصى المسموح: ${MAX_MESSAGES} رسالة
+📌 أنت طلبت: ${amount} رسالة`,
+				threadID
+			);
 		}
+
+		const message = args.slice(1).join(" ");
 
 		if (!message) {
 			return api.sendMessage(
-				"❌ الاستعمال:\nspam [الرسالة] -> لا محدود\nspam [العدد] [الرسالة] -> محدود\n\nمثال:\nspam سلام عليكم\nspam 10 سلام\n\nللإيقاف:\nspam stop",
+				"❌ خاصك تكتب الرسالة.\n\nمثال:\nspam 20 سلام عليكم",
+				threadID
+			);
+		}
+
+		// منع سبام ثاني
+		if (global.spamTasks.has(threadID)) {
+			return api.sendMessage(
+				"⚠️ كاين سبام خدام دابا.\nاستعمل: spam stop",
 				threadID
 			);
 		}
 
 		let sent = 0;
+		let timer;
 
 		const sendBatch = async () => {
-			for (let i = 0; i < 3; i++) {
+			for (
+				let i = 0;
+				i < MESSAGES_PER_SECOND && sent < amount;
+				i++
+			) {
 				if (!global.spamTasks.has(threadID)) return;
-				
-				// إلا كان محدود وسالا كيحبس
-				if (sent >= amount) {
-					clearInterval(timer);
-					global.spamTasks.delete(threadID
+
+				sent++;
+
+				await api.sendMessage(
+					message,
+					threadID
+				);
+			}
+
+			// ✅ منين يكمل العدد كيحبس بوحدو
+			if (sent >= amount) {
+				clearInterval(timer);
+				global.spamTasks.delete(threadID);
+			}
+		};
+
+		// تسجيل المهمة
+		timer = setInterval(sendBatch, 1000);
+		global.spamTasks.set(threadID, timer);
+
+		// إرسال أول دفعة نيشان
+		await sendBatch();
+	}
+};
